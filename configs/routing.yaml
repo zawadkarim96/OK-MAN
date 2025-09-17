@@ -1,0 +1,16 @@
+default:
+  mode: dynamic
+  fallback: market_on_signal
+profiles:
+  market_on_signal:
+    prefer: market
+    post_inside_spread: false
+    split_threshold: 50000
+  split_large:
+    prefer: limit
+    post_inside_spread: true
+    split_threshold: 100000
+  maker_edge:
+    prefer: maker
+    post_inside_spread: true
+    cancel_on_shift_ms: 150

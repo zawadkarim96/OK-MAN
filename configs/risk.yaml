@@ -1,0 +1,16 @@
+kelly:
+  max_fraction: 0.02
+  floor_fraction: 0.002
+  confidence_scale: true
+stops:
+  atr_multiplier_default: 2.0
+  break_even_r_multiple: 1.0
+  partial_take_profits:
+    - { at_r: 0.5, pct: 0.5 }
+  trailing_atr_multiplier: 1.5
+limits:
+  daily_drawdown_pct: 3.0
+  max_losing_streak: 4
+  correlation_limit: 0.7
+  spread_cap_bps: 30
+  latency_cap_ms: 300

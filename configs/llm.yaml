@@ -1,0 +1,12 @@
+provider: local
+model_path: ./models/llm/model.gguf
+context_length: 4096
+temperature: 0.2
+max_tokens: 512
+prompt_templates:
+  sentiment: sentiment_prompt.txt
+  researcher: researcher_prompt.txt
+  reviewer: reviewer_prompt.txt
+rate_limits:
+  tokens_per_minute: 20000
+  concurrent_sessions: 2

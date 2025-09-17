@@ -1,0 +1,10 @@
+terminal_path: /Applications/MetaTrader5/terminal64.exe
+symbols: [XAUUSD, US100, BTCUSD, GBPJPY, EURUSD]
+bridge:
+  host: 127.0.0.1
+  port: 5555
+  heartbeat_ms: 500
+account:
+  login: 0
+  server: MetaQuotes-Demo
+  leverage: 100

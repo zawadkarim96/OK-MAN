@@ -1,0 +1,4 @@
+* text=auto eol=lf
+
+# Ensure notebooks retain metadata
+*.ipynb filter=jupytext
