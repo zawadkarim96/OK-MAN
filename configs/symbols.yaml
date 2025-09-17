@@ -1,0 +1,31 @@
+symbols:
+  XAUUSD:
+    strategy_packs: [htf_trend_pullback, volatility_band_mean_reversion, breakout_with_retest]
+    volatility_threshold: 1.5
+    news_halt_minutes: 30
+    atr_multiplier: 2.5
+    session_windows: [london, new_york]
+  US100:
+    strategy_packs: [opening_range_breakout, breakout_with_retest, momentum_ignition]
+    volatility_threshold: 1.2
+    news_halt_minutes: 20
+    atr_multiplier: 2.0
+    session_windows: [new_york]
+  BTCUSD:
+    strategy_packs: [volatility_band_mean_reversion, breakout_with_retest, maker_edge_micro_mm]
+    volatility_threshold: 2.0
+    news_halt_minutes: 15
+    atr_multiplier: 3.0
+    session_windows: [london, new_york]
+  GBPJPY:
+    strategy_packs: [range_scalper_key_levels, breakout_with_retest]
+    volatility_threshold: 1.7
+    news_halt_minutes: 45
+    atr_multiplier: 3.5
+    session_windows: [london]
+  EURUSD:
+    strategy_packs: [htf_trend_pullback, range_scalper_key_levels, volatility_band_mean_reversion]
+    volatility_threshold: 1.1
+    news_halt_minutes: 20
+    atr_multiplier: 1.8
+    session_windows: [london, new_york]

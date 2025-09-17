@@ -1,0 +1,256 @@
+schema_version: 1
+strategies:
+  - name: htf_trend_pullback
+    regime_allow: [trend, volatile_trend]
+    features:
+      - ema: {tf: H1, period: 200}
+      - ema: {tf: H1, period: 50}
+      - adx: {tf: H1, period: 14}
+      - macd: {tf: M1, fast: 12, slow: 26, signal: 9}
+      - rsi: {tf: M1, period: 14}
+      - relvol: {tf: M1, lookback: 60}
+      - lob_imbalance: {horizon_ms: 500}
+    trigger:
+      all:
+        - "close(H1) > ema(H1,200)"
+        - "ema(H1,50) > ema(H1,200)"
+        - "adx(H1) > 20"
+        - "macd_hist(M1) crosses_up 0"
+        - "rsi(M1) > 40"
+    filters:
+      all:
+        - "relvol(M1) > q70"
+        - "lob_imbalance > theta1"
+        - "news.hard == false"
+    entry:
+      type: market_or_limit_smart
+      ttl_bars: 3
+    exit:
+      stop: "k1 * atr(M1)"
+      partial_tp:
+        - {at_r: 0.5, pct: 0.5}
+      trail: {mult_atr: k2}
+      move_be_at_r: 1.0
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.01}
+    routing:
+      prefer: market_on_signal
+      split_threshold: "size > S0"
+  - name: opening_range_breakout
+    regime_allow: [trend, volatile_trend]
+    features:
+      - opening_range: {tf: M1, minutes: 15}
+      - volume_spike: {tf: M1, lookback: 30}
+      - tape_tps: {tf: tick, lookback_ms: 60000}
+      - vix: {}
+    trigger:
+      any:
+        - "breaks_opening_range_high"
+        - "breaks_opening_range_low"
+    filters:
+      all:
+        - "volume_spike > q80"
+        - "tape_tps > q80"
+        - "vix < 25"
+    entry:
+      type: market
+      ttl_bars: 1
+    exit:
+      stop: "atr(M1)"
+      time_stop_bars: 10
+      trail: {mult_atr: 1.0}
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.005}
+    routing:
+      prefer: market_on_signal
+  - name: volatility_band_mean_reversion
+    regime_allow: [range, quiet]
+    features:
+      - bollinger: {tf: M1, period: 20, std: 2}
+      - rsi: {tf: M1, period: 14}
+      - cvd: {tf: tick, lookback_ms: 90000}
+    trigger:
+      any:
+        - "close_below_lower_band"
+        - "close_above_upper_band"
+    filters:
+      all:
+        - "adx(M5) < 15"
+        - "news.hard == false"
+        - "lob_absorption == true"
+    entry:
+      type: limit
+      ttl_bars: 2
+    exit:
+      stop: "0.75 * atr(M1)"
+      take_profit: "mid_band"
+      time_stop_bars: 5
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.004}
+    routing:
+      prefer: maker_edge
+  - name: breakout_with_retest
+    regime_allow: [trend, volatile_trend]
+    features:
+      - structure_levels: {lookback: 200}
+      - imbalance: {tf: tick, horizon_ms: 800}
+      - depth_slope: {tf: tick, horizon_ms: 500}
+    trigger:
+      all:
+        - "level_break_confirmed"
+        - "retest_holds"
+    filters:
+      all:
+        - "relvol(M1) > q60"
+        - "no_opposing_level_within(5)"
+    entry:
+      type: limit
+      ttl_bars: 4
+    exit:
+      stop: "structure_low"
+      take_profit: "next_htf_level"
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.008}
+    routing:
+      prefer: split_large
+  - name: momentum_ignition
+    regime_allow: [trend, volatile_trend]
+    features:
+      - tape_burst: {lookback_ms: 5000}
+      - aggressor_ratio: {lookback_ms: 5000}
+      - spread: {}
+    trigger:
+      all:
+        - "tape_burst > theta"
+        - "aggressor_ratio > theta"
+        - "spread < cap"
+    filters:
+      all:
+        - "session != lunch"
+    entry:
+      type: market
+      ttl_bars: 1
+    exit:
+      stop: "0.5 * atr(M1)"
+      time_stop_bars: 3
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.003}
+    routing:
+      prefer: market_on_signal
+  - name: range_scalper_key_levels
+    regime_allow: [range, quiet]
+    features:
+      - pivots: {lookback: 1}
+      - stoch: {tf: M3, k: 14, d: 3}
+      - aggression: {lookback_ms: 45000}
+    trigger:
+      all:
+        - "touch_key_level"
+        - "stoch_cross"
+        - "aggression_declining"
+    filters:
+      all:
+        - "spread < cap"
+        - "trend_alert == false"
+    entry:
+      type: limit
+      ttl_bars: 2
+    exit:
+      stop: "0.6 * atr(M3)"
+      take_profit: "mid_range"
+      move_be_at_r: 0.6
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.004}
+    routing:
+      prefer: maker_edge
+  - name: maker_edge_micro_mm
+    regime_allow: [quiet]
+    features:
+      - spread: {}
+      - queue_position: {horizon_ms: 200}
+      - imbalance: {horizon_ms: 200}
+    trigger:
+      all:
+        - "spread < tight_cap"
+        - "imbalance_supports"
+    filters:
+      all:
+        - "inventory_within_limits"
+    entry:
+      type: post_inside_spread
+      ttl_bars: 1
+    exit:
+      stop: "scratch"
+      time_stop_bars: 1
+    risk:
+      sizing: {method: inventory_cap, max_inventory: 2}
+    routing:
+      prefer: maker_edge
+  - name: post_news_continuation
+    regime_allow: [volatile_trend]
+    features:
+      - news_sentiment: {}
+      - volume_spike: {tf: M1, lookback: 15}
+      - lob_imbalance: {horizon_ms: 300}
+    trigger:
+      all:
+        - "news.sentiment_bias > 0"
+        - "price_in_direction_of_news"
+    filters:
+      all:
+        - "news.is_tier1 == true"
+        - "volatility_cap"
+    entry:
+      type: market
+      ttl_bars: 2
+    exit:
+      stop: "1.2 * atr(M1)"
+      time_stop_bars: 4
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.004}
+    routing:
+      prefer: market_on_signal
+  - name: microstructure_imbalance_impulse
+    regime_allow: [trend, volatile_trend]
+    features:
+      - imbalance: {horizon_ms: 300}
+      - depth_slope: {horizon_ms: 300}
+      - microprice_drift: {horizon_ms: 300}
+    trigger:
+      all:
+        - "imbalance > theta"
+        - "depth_slope > theta"
+        - "microprice_drift > 0"
+    filters:
+      any:
+        - "imbalance_duration > T"
+    entry:
+      type: market
+      ttl_bars: 1
+    exit:
+      stop: "fixed_ticks"
+      time_stop_bars: 2
+    risk:
+      sizing: {method: kelly_capped, max_frac: 0.002}
+    routing:
+      prefer: market_on_signal
+  - name: regime_switcher_macro
+    regime_allow: [trend, range, volatile_trend, quiet]
+    features:
+      - regime_classifier: {}
+      - pack_weights: {htf_trend_pullback: 0.3, volatility_band_mean_reversion: 0.2, opening_range_breakout: 0.2, breakout_with_retest: 0.3}
+    trigger:
+      all:
+        - "regime_classifier.valid"
+    filters:
+      all:
+        - "pack_kpis_stable"
+    entry:
+      type: delegate
+      delegate_packs: [htf_trend_pullback, volatility_band_mean_reversion, opening_range_breakout, breakout_with_retest]
+    exit:
+      stop: "delegated"
+    risk:
+      sizing: {method: portfolio_allocator, max_fraction: 0.02}
+    routing:
+      prefer: dynamic

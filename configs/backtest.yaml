@@ -1,0 +1,13 @@
+engine: vectorbt
+start: 2021-01-01
+end: 2023-12-31
+initial_capital: 100000
+commission_bps: 1.0
+slippage_bps: 0.5
+data_resolution: M1
+latency_ms: 150
+symbols: [XAUUSD, US100, EURUSD]
+scenarios:
+  - 2008-crisis
+  - 2010-flash-crash
+  - 2020-pandemic

@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  app:
+    build: .
+    container_name: ai-scalper-god-app
+    env_file:
+      - .env.example
+    command: ["uvicorn", "src.api.server:app", "--host", "0.0.0.0", "--port", "8080"]
+    volumes:
+      - ./:/workspace
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+  redis:
+    image: redis:7-alpine
+    container_name: ai-scalper-god-redis
+    ports:
+      - "6379:6379"
+  mt5-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-scalper-god-mt5-bridge
+    command: ["python", "-m", "src.execution.mt5_bridge.bridge"]
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - app
+  research:
+    build: .
+    container_name: ai-scalper-god-research
+    command: ["python", "-m", "src.research.sandbox_runner"]
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - app
