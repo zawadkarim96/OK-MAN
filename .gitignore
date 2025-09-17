@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.env
+.venv/
+venv/
+build/
+dist/
+.eggs/
+*.egg-info/
+
+# Data & models
+/data/
+models/checkpoints/
+models/llm/
+*.ckpt
+*.pth
+*.pt
+*.onnx
+
+# Logs & cache
+logs/
+*.log
+.cache/
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+.pre-commit-config.yaml.bak
+
+# Secrets
+*.pem
+*.key
+*.crt
+.env.local
+
+# Editors
+.idea/
+.vscode/
+.DS_Store
+
+# Generated research artifacts
+docs/research_logs/
+configs/strategies.d/*.generated.yaml

@@ -1,0 +1,7 @@
+window_days: 30
+step_days: 7
+min_oos_win_rate: 0.75
+max_oos_drawdown_pct: 5.0
+min_profit_factor: 1.8
+promotion_sessions: 5
+rollback_on_violation: true
